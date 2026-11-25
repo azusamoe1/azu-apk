@@ -5,12 +5,13 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'AZU-Mobile-Camera-Source.zip'
+      - 'AZU-Mobile-Camera-Source (2).zip'
       - '.github/workflows/main.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +27,26 @@ jobs:
       - name: Extract Android source
         run: |
           unzip -q "AZU-Mobile-Camera-Source (2).zip" -d source
-          test -f source/android/settings.gradle.kts
+          test -f source/android/app/build.gradle.kts
+
+      - name: Fix Java and Kotlin targets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("source/android/app/build.gradle.kts")
+          s = p.read_text()
+          addition = """
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+          """
+          s = s.replace("android {", "android {\n" + addition, 1)
+          p.write_text(s)
+          PY
 
       - name: Build APK
         run: gradle --no-daemon -p source/android assembleDebug
@@ -36,4 +56,3 @@ jobs:
           name: AZU-Mobile-Camera-APK
           path: source/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          
