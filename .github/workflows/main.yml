@@ -1,11 +1,10 @@
-
 name: Build AZU Mobile Camera APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'AZU-Mobile-Camera-Source (2)..zip'
+      - 'AZU-Mobile-Camera-Live-Preview-Stage1.zip'
       - '.github/workflows/main.yml'
 
 jobs:
@@ -13,68 +12,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Download repository source
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Install Java 17
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      # 3. Install Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      # 4. Extract Android project
       - name: Extract Android source
         run: |
-          unzip -q "AZU-Mobile-Camera-Source (2)..zip" -d source
-          test -f source/android/settings.gradle.kts
-          test -f source/android/app/build.gradle.kts
-          test -f source/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt
+          unzip -q "AZU-Mobile-Camera-Live-Preview-Stage1.zip" -d source
+          test -f source/AZU-Mobile-Camera-Source-2/android/settings.gradle.kts
+          test -f source/AZU-Mobile-Camera-Source-2/android/app/build.gradle.kts
+          test -f source/AZU-Mobile-Camera-Source-2/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt
 
-      # 5. Fix Java and Kotlin JVM targets
-      - name: Fix Java and Kotlin targets
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path("source/android/app/build.gradle.kts")
-          s = p.read_text()
-
-          if "compileOptions {" not in s:
-              addition = """
-              compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
-              }
-              kotlinOptions {
-                  jvmTarget = "17"
-              }
-          """
-              s = s.replace("android {", "android {\n" + addition, 1)
-
-          p.write_text(s)
-          print("Java and Kotlin targets configured for JVM 17")
-          PY
-
-      # 6. Build Android APK
       - name: Build AZU Mobile Camera APK
         run: |
           gradle --no-daemon \
-            -p source/android \
+            -p source/AZU-Mobile-Camera-Source-2/android \
             assembleDebug
 
-      # 8. Upload APK
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AZU-Mobile-Camera-APK
-          path: source/android/app/build/outputs/apk/debug/app-debug.apk
+          name: AZU-Mobile-Camera-Live-Preview-APK
+          path: source/AZU-Mobile-Camera-Source-2/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
