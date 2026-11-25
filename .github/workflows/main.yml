@@ -33,11 +33,25 @@ jobs:
           test -f source/AZU-Mobile-Camera-Source-2/android/app/build.gradle.kts
           test -f source/AZU-Mobile-Camera-Source-2/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt
 
+      # Maven Central returned HTTP 429 (rate limit) in the previous run.
+      # Limit parallel dependency requests and retry transient repository failures.
       - name: Build AZU Mobile Camera APK
+        env:
+          GRADLE_OPTS: -Dorg.gradle.parallel=false -Dorg.gradle.workers.max=2
         run: |
-          gradle --no-daemon \
-            -p source/AZU-Mobile-Camera-Source-2/android \
-            assembleDebug
+          PROJECT="source/AZU-Mobile-Camera-Source-2/android"
+          for attempt in 1 2 3; do
+            echo "Gradle build attempt $attempt of 3"
+            if gradle --no-daemon --max-workers=2 -p "$PROJECT" assembleDebug; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Build failed; waiting 45 seconds before retrying dependency resolution..."
+              sleep 45
+            fi
+          done
+          echo "Build failed after 3 attempts."
+          exit 1
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
