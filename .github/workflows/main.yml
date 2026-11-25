@@ -13,29 +13,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # 1. Download repository source
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      # 2. Install Java 17
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      # 3. Install Gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
+      # 4. Extract Android project
       - name: Extract Android source
         run: |
           unzip -q "AZU-Mobile-Camera-Source (2).zip" -d source
+          test -f source/android/settings.gradle.kts
           test -f source/android/app/build.gradle.kts
+          test -f source/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt
 
+      # 5. Fix Java and Kotlin JVM targets
       - name: Fix Java and Kotlin targets
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
           p = Path("source/android/app/build.gradle.kts")
           s = p.read_text()
-          addition = """
+
+          if "compileOptions {" not in s:
+              addition = """
               compileOptions {
                   sourceCompatibility = JavaVersion.VERSION_17
                   targetCompatibility = JavaVersion.VERSION_17
@@ -44,15 +57,50 @@ jobs:
                   jvmTarget = "17"
               }
           """
-          s = s.replace("android {", "android {\n" + addition, 1)
+              s = s.replace("android {", "android {\n" + addition, 1)
+
+          p.write_text(s)
+          print("Java and Kotlin targets configured for JVM 17")
+          PY
+
+      # 6. Fix Kotlin multiline string
+      - name: Fix Kotlin multiline string
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path(
+              "source/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt"
+          )
+
+          s = p.read_text()
+
+          old = 'pairing.text = "PC address: http://$ip:8765\nPairing token: $token"'
+          new = 'pairing.text = "PC address: http://$ip:8765\\nPairing token: $token"'
+
+          if old in s:
+              s = s.replace(old, new, 1)
+              print("Multiline Kotlin string corrected")
+          elif new in s:
+              print("Kotlin string already corrected")
+          else:
+              raise SystemExit("Expected pairing.text string not found")
+
           p.write_text(s)
           PY
 
-      - name: Build APK
-        run: gradle --no-daemon -p source/android assembleDebug
+      # 7. Build Android APK
+      - name: Build AZU Mobile Camera APK
+        run: |
+          gradle --no-daemon \
+            -p source/android \
+            assembleDebug
 
-      - uses: actions/upload-artifact@v4
+      # 8. Upload APK
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
         with:
           name: AZU-Mobile-Camera-APK
           path: source/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 30
