@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'AZU-Mobile-Camera-Live-Preview-Stage1.zip'
+      - 'AZU-Mobile-Camera-Live-Preview-Stage2.zip'
       - '.github/workflows/main.yml'
 
 jobs:
@@ -28,10 +28,11 @@ jobs:
 
       - name: Extract Android source
         run: |
-          unzip -q "AZU-Mobile-Camera-Live-Preview-Stage1.zip" -d source
+          unzip -q "AZU-Mobile-Camera-Live-Preview-Stage2.zip" -d source
           test -f source/AZU-Mobile-Camera-Source-2/android/settings.gradle.kts
           test -f source/AZU-Mobile-Camera-Source-2/android/app/build.gradle.kts
           test -f source/AZU-Mobile-Camera-Source-2/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt
+          test -f source/AZU-Mobile-Camera-Source-2/android/app/src/main/res/layout/activity_main.xml
 
       # Maven Central returned HTTP 429 (rate limit) in the previous run.
       # Limit parallel dependency requests and retry transient repository failures.
@@ -56,7 +57,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: AZU-Mobile-Camera-Live-Preview-APK
+          name: AZU-Mobile-Camera-Live-Preview-Stage2-APK
           path: source/AZU-Mobile-Camera-Source-2/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
