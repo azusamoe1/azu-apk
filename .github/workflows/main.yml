@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'android/**'
+      - 'AZU-Mobile-Camera-Source.zip'
       - '.github/workflows/main.yml'
 
 jobs:
@@ -23,11 +23,16 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Extract Android source
+        run: |
+          unzip -q "AZU-Mobile-Camera-Source (2).zip" -d source
+          test -f source/android/settings.gradle.kts
+
       - name: Build APK
-        working-directory: android
-        run: gradle --no-daemon assembleDebug
+        run: gradle --no-daemon -p source/android assembleDebug
 
       - uses: actions/upload-artifact@v4
         with:
           name: AZU-Mobile-Camera-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: source/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
