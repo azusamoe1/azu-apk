@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'AZU-Mobile-Camera-Source (2).zip'
+      - 'AZU-Mobile-Camera-Source (2)..zip'
       - '.github/workflows/main.yml'
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
       # 4. Extract Android project
       - name: Extract Android source
         run: |
-          unzip -q "AZU-Mobile-Camera-Source (2).zip" -d source
+          unzip -q "AZU-Mobile-Camera-Source (2)..zip" -d source
           test -f source/android/settings.gradle.kts
           test -f source/android/app/build.gradle.kts
           test -f source/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt
