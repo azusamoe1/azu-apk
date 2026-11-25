@@ -63,33 +63,7 @@ jobs:
           print("Java and Kotlin targets configured for JVM 17")
           PY
 
-      # 6. Fix Kotlin multiline string
-      - name: Fix Kotlin multiline string
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path(
-              "source/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt"
-          )
-
-          s = p.read_text()
-
-          old = 'pairing.text = "PC address: http://$ip:8765\nPairing token: $token"'
-          new = 'pairing.text = "PC address: http://$ip:8765\\nPairing token: $token"'
-
-          if old in s:
-              s = s.replace(old, new, 1)
-              print("Multiline Kotlin string corrected")
-          elif new in s:
-              print("Kotlin string already corrected")
-          else:
-              raise SystemExit("Expected pairing.text string not found")
-
-          p.write_text(s)
-          PY
-
-      # 7. Build Android APK
+      # 6. Build Android APK
       - name: Build AZU Mobile Camera APK
         run: |
           gradle --no-daemon \
