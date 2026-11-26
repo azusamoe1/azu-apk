@@ -33,6 +33,8 @@ jobs:
           test -f source/AZU-Mobile-Camera-Source-2/android/app/build.gradle.kts
           test -f source/AZU-Mobile-Camera-Source-2/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt
           test -f source/AZU-Mobile-Camera-Source-2/android/app/src/main/res/layout/activity_main.xml
+          # Remove unsupported CameraX ImageAnalysis frame-rate builder call.
+          sed -i '/analysisBuilder.setTargetFrameRate(range)/d' source/AZU-Mobile-Camera-Source-2/android/app/src/main/java/com/azu/mobilecamera/MainActivity.kt
 
       # Maven Central returned HTTP 429 (rate limit) in the previous run.
       # Limit parallel dependency requests and retry transient repository failures.
